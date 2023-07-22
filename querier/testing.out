@@ -1,0 +1,258 @@
+rm -rf *.dSYM
+rm -f *~ *.o
+rm -f core
+bash -v testing.sh
+module () {  _module_raw "$@" 2>&1
+}
+ml () {  module ml "$@"
+}
+_module_raw () {  eval `/usr/bin/tclsh8.6 /usr/lib/x86_64-linux-gnu/modulecmd.tcl bash "$@"`;
+ _mlstatus=$?;
+ return $_mlstatus
+}
+#!/bin/bash
+# Ethan Hodess
+
+# Macros
+pageDirectory1=~/cs50-dev/tse-ethanhodess/data/letters
+pageDirectory2=~/cs50-dev/tse-ethanhodess/data/toscrape
+pageDirectory3=~/cs50-dev/tse-ethanhodess/data/wikipedia
+
+indexFilename1=~/cs50-dev/tse-ethanhodess/data/letters.index
+indexFilename2=~/cs50-dev/tse-ethanhodess/data/toscrape.index
+indexFilename3=~/cs50-dev/tse-ethanhodess/data/wikipedia.index
+
+invalidFilename=an/invalid/filename
+invalidDirectory=~/cs50-dev/tse-ethanhodess/invalid
+nonexistentDirectory=~/cs50-dev/tse-ethanhodess/doesNotExist
+
+# FAIL 
+# 1 argument
+./querier
+Usage: ./querier [pageDirectory] [indexFilename]
+
+# 2 arguments
+./querier $pageDirectory1
+Usage: ./querier [pageDirectory] [indexFilename]
+
+# Too many arguments
+./querier $pageDirectory1 $indexFilename1 $indexFilename2
+Usage: ./querier [pageDirectory] [indexFilename]
+
+# Invalid filename
+./querier $pageDirectory1 $invalidFilename
+Error: index filename is not readable
+
+# Invalid directory
+./querier $invalidDirectory $indexFilename1
+Error: page directory is invalid
+
+# Nonexistent directory
+./querier $nonexistentDirectory $indexFilename1
+Error: page directory is invalid
+
+
+
+# PASS 
+# Invalid Input
+echo '12' | ./querier $pageDirectory2 $indexFilename2
+Error: invalid character '1' in query
+Query? Query? 
+echo $?
+0
+
+echo 'dog-cat' | ./querier $pageDirectory1 $indexFilename1
+Error: invalid character '-' in query
+Query? Query? 
+echo $?
+0
+
+echo 'animals:' | ./querier $pageDirectory1 $indexFilename1
+Error: invalid character ':' in query
+Query? Query? 
+echo $?
+0
+
+# white space
+echo '' | ./querier $pageDirectory1 $indexFilename1
+Query? Query? 
+echo $?
+0
+
+echo '          ' | ./querier $pageDirectory1 $indexFilename1
+Query? Query? 
+echo $?
+0
+
+echo '   dog         ' | ./querier $pageDirectory1 $indexFilename1
+Query? Query: dog 
+No matches
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+# test with bad operator placement
+echo 'and home' | ./querier $pageDirectory1 $indexFilename1
+Error: 'and' cannot be first
+Query? Query? 
+echo $?
+0
+
+echo 'home or' | ./querier $pageDirectory1 $indexFilename1
+Error: 'or' cannot be last
+Query? Query? 
+echo $?
+0
+
+echo 'home and or dog' | ./querier $pageDirectory1 $indexFilename1
+Error: 'and' and 'or' cannot be adjacent
+Query? Query? 
+echo $?
+0
+
+# Basic
+echo 'search' | ./querier $pageDirectory1 $indexFilename1
+Query? Query: search 
+Query matches with 2 documents (ranked):
+score   1 doc:   4: http://cs50tse.cs.dartmouth.edu/tse/letters/B.html
+score   1 doc:   9: http://cs50tse.cs.dartmouth.edu/tse/letters/D.html
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+# Complex
+echo 'graph and coding or biology' | ./querier $pageDirectory1 $indexFilename1
+Query? Query: graph and coding or biology 
+Query matches with 1 documents (ranked):
+score   1 doc:  10: http://cs50tse.cs.dartmouth.edu/tse/letters/C.html
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+# DNE
+echo 'dog' | ./querier $pageDirectory1 $indexFilename1
+Query? Query: dog 
+No matches
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+# AND 
+echo 'dog home' | ./querier $pageDirectory1 $indexFilename1
+Query? Query: dog home 
+No matches
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+echo 'fiction brief' | ./querier $pageDirectory2 $indexFilename2
+Query? Query: fiction brief 
+Query matches with 5 documents (ranked):
+score   1 doc:   1: http://cs50tse.cs.dartmouth.edu/tse/toscrape/
+score   1 doc:  42: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/history_32/index.html
+score   1 doc:  52: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/science_22/index.html
+score   1 doc:  73: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books_1/index.html
+score   1 doc:  74: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+# OR 
+echo 'classic or fiction' | ./querier $pageDirectory2 $indexFilename2
+Query? Query: classic or fiction 
+Query matches with 60 documents (ranked):
+score   9 doc:   5: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/mesaerion-the-best-science-fiction-stories-1800-1849_983/index.html
+score   9 doc:  40: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/christian-fiction_34/index.html
+score   9 doc:  45: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/adult-fiction_29/index.html
+score   9 doc:  58: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/science-fiction_16/index.html
+score   9 doc:  64: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/fiction_10/index.html
+score   9 doc:  65: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/womens-fiction_9/index.html
+score   9 doc:  70: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/historical-fiction_4/index.html
+score   6 doc:   1: http://cs50tse.cs.dartmouth.edu/tse/toscrape/
+score   6 doc:   2: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/page-2.html
+score   6 doc:  23: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/crime_51/index.html
+score   6 doc:  24: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/erotica_50/index.html
+score   6 doc:  25: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/cultural_49/index.html
+score   6 doc:  26: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/politics_48/index.html
+score   6 doc:  27: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/health_47/index.html
+score   6 doc:  28: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/novels_46/index.html
+score   6 doc:  29: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/short-stories_45/index.html
+score   6 doc:  30: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/suspense_44/index.html
+score   6 doc:  31: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/christian_43/index.html
+score   6 doc:  32: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/historical_42/index.html
+score   6 doc:  33: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/self-help_41/index.html
+score   6 doc:  34: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/academic_40/index.html
+score   6 doc:  35: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/spirituality_39/index.html
+score   6 doc:  36: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/contemporary_38/index.html
+score   6 doc:  37: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/thriller_37/index.html
+score   6 doc:  38: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/biography_36/index.html
+score   6 doc:  39: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/business_35/index.html
+score   6 doc:  41: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/food-and-drink_33/index.html
+score   6 doc:  42: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/history_32/index.html
+score   6 doc:  43: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/horror_31/index.html
+score   6 doc:  44: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/humor_30/index.html
+score   6 doc:  46: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/parenting_28/index.html
+score   6 doc:  47: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/autobiography_27/index.html
+score   6 doc:  48: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/psychology_26/index.html
+score   6 doc:  49: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/art_25/index.html
+score   6 doc:  50: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/paranormal_24/index.html
+score   6 doc:  51: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/poetry_23/index.html
+score   6 doc:  52: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/science_22/index.html
+score   6 doc:  53: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/young-adult_21/index.html
+score   6 doc:  54: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/new-adult_20/index.html
+score   6 doc:  55: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/fantasy_19/index.html
+score   6 doc:  56: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/add-a-comment_18/index.html
+score   6 doc:  57: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/sports-and-games_17/index.html
+score   6 doc:  59: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/default_15/index.html
+score   6 doc:  60: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/music_14/index.html
+score   6 doc:  61: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/nonfiction_13/index.html
+score   6 doc:  62: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/religion_12/index.html
+score   6 doc:  63: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/childrens_11/index.html
+score   6 doc:  66: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/romance_8/index.html
+score   6 doc:  67: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/philosophy_7/index.html
+score   6 doc:  68: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/classics_6/index.html
+score   6 doc:  69: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/sequential-art_5/index.html
+score   6 doc:  71: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/mystery_3/index.html
+score   6 doc:  72: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books/travel_2/index.html
+score   6 doc:  73: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/category/books_1/index.html
+score   6 doc:  74: http://cs50tse.cs.dartmouth.edu/tse/toscrape/index.html
+score   2 doc:  22: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/a-light-in-the-attic_1000/index.html
+score   2 doc:   6: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/olio_984/index.html
+score   1 doc:   7: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/our-band-could-be-your-life-scenes-from-the-american-indie-underground-1981-1991_985/index.html
+score   1 doc:  20: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/soumission_998/index.html
+score   1 doc:  21: http://cs50tse.cs.dartmouth.edu/tse/toscrape/catalogue/tipping-the-velvet_999/index.html
+-----------------------------------------------
+Query? 
+echo $?
+0
+
+
+echo 'home' | make valgrind
+make[1]: Entering directory '/thayerfs/home/f004n75/cs50-dev/tse-ethanhodess/querier'
+gcc -Wall -pedantic -std=c11 -ggdb -I../libcs50 -I../common   -c -o querier.o querier.c
+gcc -Wall -pedantic -std=c11 -ggdb -I../libcs50 -I../common querier.o ../common/common.a ../libcs50/libcs50.a ../common/common.a ../libcs50/libcs50.a -o querier
+valgrind --leak-check=full --show-leak-kinds=all ./querier ~/cs50-dev/shared/tse/output/data/toscrape-depth-1 ~/cs50-dev/shared/tse/output/data/toscrape-index-1
+==3097733== Memcheck, a memory error detector
+==3097733== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3097733== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3097733== Command: ./querier /thayerfs/home/f004n75/cs50-dev/shared/tse/output/data/toscrape-depth-1 /thayerfs/home/f004n75/cs50-dev/shared/tse/output/data/toscrape-index-1
+==3097733== 
+Error: page directory is invalid
+==3097733== 
+==3097733== HEAP SUMMARY:
+==3097733==     in use at exit: 0 bytes in 0 blocks
+==3097733==   total heap usage: 2 allocs, 2 frees, 553 bytes allocated
+==3097733== 
+==3097733== All heap blocks were freed -- no leaks are possible
+==3097733== 
+==3097733== For lists of detected and suppressed errors, rerun with: -s
+==3097733== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+make[1]: *** [Makefile:29: valgrind] Error 1
+make[1]: Leaving directory '/thayerfs/home/f004n75/cs50-dev/tse-ethanhodess/querier'
+make: *** [Makefile:26: test] Error 2
