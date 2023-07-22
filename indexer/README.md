@@ -1,10 +1,8 @@
-# CS50 TSE - Ethan Hodess
-
 ### indexer
 
-The _indexer_ module is the second part of the Tiny Search Engine.
+The _indexer_ module is the second part of the Basic Search Engine.
 
-The TSE indexer is a standalone program that reads crawler file outputs, builds an index, and writes the index to a file:
+The indexer is a standalone program that reads crawler file outputs, builds an index, and writes the index to a file:
 
 `indexer.c` runs the index methods to build the index from the crawler directory, and it then prints an indexer output directory to a given filename
 
