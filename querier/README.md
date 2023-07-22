@@ -1,10 +1,10 @@
-# CS50 TSE - Ethan Hodess
+# Basic Search Engine
 
 ### querier
 
-The _querier_ module is the third part of the Tiny Search Engine.
+The _querier_ module is the third part of the Basic Search Engine.
 
-The TSE querier is a standalone program that reads index files and responds to queries from stdin.
+The querier is a standalone program that reads index files and responds to queries from stdin.
 
 The querier supports full functionality. The program should print the set of documents that contain all the words in the query. It also treats 'and' with higher precedence than 'or.' It also prints the document set in decreasing order by score.
 
