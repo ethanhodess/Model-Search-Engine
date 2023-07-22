@@ -1,9 +1,4 @@
-# CS50 TSE
-## Ethan Hodess 
-
-Github username: ethanhodess
-
-* EXTENSION USED
+# Model Search Engine
 
 To build, run `make`.
 
